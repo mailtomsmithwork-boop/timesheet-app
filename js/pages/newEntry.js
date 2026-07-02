@@ -204,7 +204,17 @@ async function renderNewEntry(app) {
     recognition.addEventListener("error", (e) => {
       voiceMicBtn.disabled = false;
       voiceMicBtn.textContent = "🎤";
-      showToast("Voice input error: " + e.error, "error");
+      if (e.error === "network") {
+        // Some browsers (Brave in particular) block the speech recognition
+        // network service outright — retrying won't help, so stop offering it.
+        voiceMicBtn.style.display = "none";
+        showToast(
+          "Voice input isn't available in this browser (common in Brave). Type into the box instead, or use Win+H for OS-level dictation.",
+          "error"
+        );
+      } else {
+        showToast("Voice input error: " + e.error, "error");
+      }
     });
   }
 
