@@ -55,6 +55,26 @@ function round2_(n) {
   return Math.round(n * 100) / 100;
 }
 
+/**
+ * Sheets auto-converts date/time-looking text into Date-typed cells, so
+ * getValues() can hand back JS Date objects instead of the plain strings we
+ * wrote. Format them back to plain strings for the client; leave anything
+ * else (already a string) untouched.
+ */
+function formatDateCell_(value) {
+  if (value instanceof Date) {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  }
+  return value;
+}
+
+function formatTimeCell_(value) {
+  if (value instanceof Date) {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), 'HH:mm');
+  }
+  return value;
+}
+
 function logAction_(action, details) {
   var sheet = getSheet_('Logs');
   sheet.appendRow([new Date(), action, JSON.stringify(details)]);

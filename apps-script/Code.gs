@@ -37,7 +37,20 @@ function doGet(e) {
 }
 
 function getEntries_() {
-  return getAllRows_('DataPool');
+  return getAllRows_('DataPool').map(formatEntryRow_);
+}
+
+/** Normalizes Date/TimeIn/TimeOut back to plain strings (see formatDateCell_/formatTimeCell_). */
+function formatEntryRow_(row) {
+  return {
+    EntryID: row.EntryID,
+    Date: formatDateCell_(row.Date),
+    TimeIn: formatTimeCell_(row.TimeIn),
+    TimeOut: formatTimeCell_(row.TimeOut),
+    TotalTime: row.TotalTime,
+    JobNumber: row.JobNumber,
+    Reason: row.Reason
+  };
 }
 
 function addEntry_(params) {
