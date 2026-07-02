@@ -12,6 +12,65 @@ function timeToMinutes_(t) {
   return h * 60 + m;
 }
 
+function pad2_(n) {
+  return String(n).padStart(2, "0");
+}
+
+// hour is 0-23 (or 0-12 with a meridiem). assumePmIfAmbiguous only applies
+// when no am/pm was heard and the hour is in the 1-11 range.
+function to24Hour_(hour, minute, meridiem, assumePmIfAmbiguous) {
+  if (hour === 0 || hour >= 13) {
+    return pad2_(hour) + ":" + pad2_(minute);
+  }
+  let h = hour % 12;
+  if (meridiem === "pm" || (meridiem === null && assumePmIfAmbiguous)) {
+    h += 12;
+  }
+  return pad2_(h) + ":" + pad2_(minute);
+}
+
+// Speech recognition (and most typed input) already renders spoken numbers
+// as digits, but this covers common spelled-out cases too.
+function wordsToDigits_(text) {
+  const map = {
+    zero: "0", oh: "0", one: "1", two: "2", three: "3", four: "4", five: "5",
+    six: "6", seven: "7", eight: "8", nine: "9", ten: "10", eleven: "11", twelve: "12",
+  };
+  return text.replace(
+    /\b(zero|oh|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b/gi,
+    (m) => map[m.toLowerCase()]
+  );
+}
+
+// Parses phrases like "Friday 9 to 5:30" or "Monday 8:45am to 4pm" into
+// { day, timeIn, timeOut }. Returns nulls for anything it couldn't find.
+function parseSpokenEntry_(rawText) {
+  const normalized = wordsToDigits_(rawText.toLowerCase());
+  const day = Object.keys(STANDARD_SCHEDULE).find((d) => normalized.includes(d.toLowerCase())) || null;
+
+  const timeRegex = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi;
+  const matches = [];
+  let m;
+  while ((m = timeRegex.exec(normalized)) !== null) {
+    matches.push({
+      hour: parseInt(m[1], 10),
+      minute: m[2] ? parseInt(m[2], 10) : 0,
+      meridiem: m[3] ? m[3].toLowerCase() : null,
+    });
+  }
+
+  if (matches.length < 2) {
+    return { day, timeIn: null, timeOut: null };
+  }
+
+  const [first, second] = matches;
+  return {
+    day,
+    timeIn: to24Hour_(first.hour, first.minute, first.meridiem, false),
+    timeOut: to24Hour_(second.hour, second.minute, second.meridiem, true),
+  };
+}
+
 async function renderNewEntry(app) {
   app.innerHTML = `
     <h1>New Entry</h1>
@@ -40,6 +99,14 @@ async function renderNewEntry(app) {
         <button type="button" id="qcCheckBtn" class="btn btn-secondary">Check</button>
       </div>
       <div id="qcResult" class="qc-result"></div>
+
+      <label class="voice-entry-label">Or type/say it — e.g. "Friday 9 to 5:30"
+        <div class="quick-check-row">
+          <input type="text" id="voiceText" class="input voice-input" placeholder="Friday 9 to 5:30" />
+          <button type="button" id="voiceMicBtn" class="btn btn-icon" title="Speak" style="display:none;">🎤</button>
+          <button type="button" id="voiceFillBtn" class="btn btn-secondary">Fill</button>
+        </div>
+      </label>
     </div>
 
     <form id="newEntryForm" class="form">
@@ -66,7 +133,7 @@ async function renderNewEntry(app) {
 
   const form = document.getElementById("newEntryForm");
 
-  document.getElementById("qcCheckBtn").addEventListener("click", () => {
+  function runQuickCheck_() {
     const day = document.getElementById("qcDay").value;
     const timeIn = document.getElementById("qcTimeIn").value;
     const timeOut = document.getElementById("qcTimeOut").value;
@@ -92,7 +159,55 @@ async function renderNewEntry(app) {
       resultEl.textContent = `Within your standard ${day} hours (${schedule.start}–${schedule.end}) — nothing transferred.`;
       resultEl.className = "qc-result qc-ok";
     }
-  });
+  }
+
+  document.getElementById("qcCheckBtn").addEventListener("click", runQuickCheck_);
+
+  const voiceText = document.getElementById("voiceText");
+  const voiceMicBtn = document.getElementById("voiceMicBtn");
+
+  function applyVoiceEntry_() {
+    const parsed = parseSpokenEntry_(voiceText.value);
+    if (!parsed.day || !parsed.timeIn || !parsed.timeOut) {
+      showToast('Could not understand that. Try "Friday 9 to 5:30".', "error");
+      return;
+    }
+    document.getElementById("qcDay").value = parsed.day;
+    document.getElementById("qcTimeIn").value = parsed.timeIn;
+    document.getElementById("qcTimeOut").value = parsed.timeOut;
+    runQuickCheck_();
+  }
+
+  document.getElementById("voiceFillBtn").addEventListener("click", applyVoiceEntry_);
+
+  const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SpeechRecognitionCtor) {
+    voiceMicBtn.style.display = "";
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = "en-GB";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    voiceMicBtn.addEventListener("click", () => {
+      voiceMicBtn.disabled = true;
+      voiceMicBtn.textContent = "…";
+      recognition.start();
+    });
+    recognition.addEventListener("result", (e) => {
+      voiceText.value = e.results[0][0].transcript;
+      applyVoiceEntry_();
+    });
+    recognition.addEventListener("end", () => {
+      voiceMicBtn.disabled = false;
+      voiceMicBtn.textContent = "🎤";
+    });
+    recognition.addEventListener("error", (e) => {
+      voiceMicBtn.disabled = false;
+      voiceMicBtn.textContent = "🎤";
+      showToast("Voice input error: " + e.error, "error");
+    });
+  }
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const formData = new FormData(form);

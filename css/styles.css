@@ -246,6 +246,20 @@ body.sidebar-collapsed .main-content {
   min-height: 1em;
 }
 
+.voice-entry-label {
+  display: block;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.voice-input {
+  flex: 1;
+  min-width: 200px;
+}
+
 .qc-over {
   color: var(--accent);
 }
