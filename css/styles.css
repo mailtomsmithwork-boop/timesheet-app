@@ -210,6 +210,54 @@ body.sidebar-collapsed .main-content {
   gap: 12px;
 }
 
+/* Quick time check */
+
+.quick-check {
+  max-width: 560px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 28px;
+}
+
+.quick-check h2 {
+  margin-top: 0;
+}
+
+.quick-check-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.quick-check-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.qc-result {
+  margin-top: 14px;
+  font-size: 13px;
+  min-height: 1em;
+}
+
+.qc-over {
+  color: var(--accent);
+}
+
+.qc-ok {
+  color: var(--success);
+}
+
+.qc-warn {
+  color: var(--danger);
+}
+
 /* Forms */
 
 .form {
