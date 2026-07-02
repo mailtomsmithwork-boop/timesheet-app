@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timesheet — Thomas</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <button id="sidebarToggle" class="glow-toggle" aria-label="Toggle sidebar">☰</button>
+
+  <nav id="sidebar" class="sidebar">
+    <div class="sidebar-header">Timesheet</div>
+    <a href="#/" data-route="#/">Home</a>
+    <a href="#/recordings" data-route="#/recordings">Recordings</a>
+    <a href="#/new-entry" data-route="#/new-entry">New Entry</a>
+    <a href="#/remove-entry" data-route="#/remove-entry">Remove Entry</a>
+    <a href="#/dashboard" data-route="#/dashboard">Dashboard</a>
+    <a href="#/settings" data-route="#/settings">Settings</a>
+    <a href="#/about" data-route="#/about">About</a>
+  </nav>
+
+  <main id="app" class="main-content"></main>
+  <div id="toastContainer"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/pages/home.js"></script>
+  <script src="js/pages/recordings.js"></script>
+  <script src="js/pages/newEntry.js"></script>
+  <script src="js/pages/removeEntry.js"></script>
+  <script src="js/pages/dashboard.js"></script>
+  <script src="js/pages/settings.js"></script>
+  <script src="js/pages/about.js"></script>
+  <script src="js/router.js"></script>
+</body>
+</html>
