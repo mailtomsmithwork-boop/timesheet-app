@@ -145,18 +145,29 @@ async function renderNewEntry(app) {
       return;
     }
 
+    const workedMinutes = timeToMinutes_(timeOut) - timeToMinutes_(timeIn);
+    if (workedMinutes <= 0) {
+      resultEl.textContent = "Time Out must be after Time In.";
+      resultEl.className = "qc-result qc-warn";
+      return;
+    }
+
     const schedule = STANDARD_SCHEDULE[day];
+    const standardMinutes = timeToMinutes_(schedule.end) - timeToMinutes_(schedule.start);
+    const diffMinutes = workedMinutes - standardMinutes;
     const wentOver =
       timeToMinutes_(timeIn) < timeToMinutes_(schedule.start) ||
       timeToMinutes_(timeOut) > timeToMinutes_(schedule.end);
 
+    const workedLabel = `${workedMinutes} minutes worked (${formatHoursMinutes(workedMinutes / 60)})`;
+
     if (wentOver) {
       form.elements["TimeIn"].value = timeIn;
       form.elements["TimeOut"].value = timeOut;
-      resultEl.textContent = `Over your standard ${day} hours (${schedule.start}–${schedule.end}) — Time In/Out transferred below.`;
+      resultEl.textContent = `${workedLabel}. Over your standard ${day} hours (${schedule.start}–${schedule.end}) by ${diffMinutes} minutes — Time In/Out transferred below.`;
       resultEl.className = "qc-result qc-over";
     } else {
-      resultEl.textContent = `Within your standard ${day} hours (${schedule.start}–${schedule.end}) — nothing transferred.`;
+      resultEl.textContent = `${workedLabel}. Within your standard ${day} hours (${schedule.start}–${schedule.end}, ${-diffMinutes} minutes under) — nothing transferred.`;
       resultEl.className = "qc-result qc-ok";
     }
   }

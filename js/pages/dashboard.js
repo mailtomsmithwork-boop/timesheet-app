@@ -6,15 +6,15 @@ async function renderDashboard(app) {
     <div class="card-grid">
       <div class="card">
         <div class="card-label">Total Hours</div>
-        <div class="card-value">${dashboard.totalHours}h</div>
+        <div class="card-value">${formatHoursMinutes(dashboard.totalHours)}</div>
       </div>
       <div class="card">
         <div class="card-label">This Week</div>
-        <div class="card-value">${dashboard.weekHours}h</div>
+        <div class="card-value">${formatHoursMinutes(dashboard.weekHours)}</div>
       </div>
       <div class="card">
         <div class="card-label">This Month</div>
-        <div class="card-value">${dashboard.monthHours}h</div>
+        <div class="card-value">${formatHoursMinutes(dashboard.monthHours)}</div>
       </div>
       <div class="card">
         <div class="card-label">Entries</div>

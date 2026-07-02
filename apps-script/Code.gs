@@ -27,6 +27,12 @@ function doGet(e) {
       case 'saveSettings':
         data = saveSettings_(e.parameter);
         break;
+      case 'getArchiveMonths':
+        data = getArchiveMonths_();
+        break;
+      case 'getArchiveEntries':
+        data = getArchiveEntries_(e.parameter);
+        break;
       default:
         return jsonError_(action, 'Unknown or missing action: ' + action);
     }

@@ -39,9 +39,7 @@ function ensureSheetsExist_() {
   });
 }
 
-function getAllRows_(sheetName) {
-  var sheet = getSheet_(sheetName);
-  var values = sheet.getDataRange().getValues();
+function valuesToObjects_(values) {
   if (values.length < 2) return [];
   var headers = values[0];
   return values.slice(1).map(function (row) {
@@ -51,6 +49,11 @@ function getAllRows_(sheetName) {
     });
     return obj;
   });
+}
+
+function getAllRows_(sheetName) {
+  var sheet = getSheet_(sheetName);
+  return valuesToObjects_(sheet.getDataRange().getValues());
 }
 
 function appendRow_(sheetName, rowObject) {

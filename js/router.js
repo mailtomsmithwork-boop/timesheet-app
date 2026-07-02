@@ -6,6 +6,7 @@ const routes = {
   "#/new-entry": renderNewEntry,
   "#/remove-entry": renderRemoveEntry,
   "#/dashboard": renderDashboard,
+  "#/archives": renderArchives,
   "#/settings": renderSettings,
   "#/about": renderAbout,
 };
