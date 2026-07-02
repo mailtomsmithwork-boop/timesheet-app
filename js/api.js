@@ -12,14 +12,31 @@ async function apiGet(action, params) {
   url.searchParams.set("action", action);
   Object.keys(params).forEach((k) => url.searchParams.set(k, params[k]));
 
+  return fetchJson_(url.toString(), 1);
+}
+
+// Apps Script Web Apps occasionally return an HTML error page instead of
+// JSON right after a fresh deploy (a known transient quirk, not something
+// our code controls) — retry once before surfacing a clean error.
+async function fetchJson_(url, retriesLeft) {
   let res;
   try {
-    res = await fetch(url.toString());
+    res = await fetch(url);
   } catch (err) {
     throw new Error("Could not reach the backend. Check API_BASE in js/config.js.");
   }
 
-  const json = await res.json();
+  let json;
+  try {
+    json = await res.json();
+  } catch (err) {
+    if (retriesLeft > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      return fetchJson_(url, retriesLeft - 1);
+    }
+    throw new Error("The backend returned an invalid response. This can happen transiently with Apps Script — please try again.");
+  }
+
   if (!json.ok) {
     throw new Error(json.error || "Unknown API error");
   }
