@@ -62,14 +62,14 @@ function getArchiveMonths_() {
   return ss
     .getSheets()
     .map(function (s) { return s.getName(); })
-    .filter(function (name) { return /^Archive-\d{4}-\d{2}$/.test(name); })
+    .filter(function (name) { return /^Archive-\d\d\d\d-\d\d$/.test(name); })
     .sort()
     .reverse();
 }
 
 function getArchiveEntries_(params) {
   var month = params.month;
-  if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+  if (!month || !/^\d\d\d\d-\d\d$/.test(month)) {
     throw new Error('Invalid or missing month parameter (expected YYYY-MM)');
   }
   var sheetName = 'Archive-' + month;
