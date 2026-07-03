@@ -1,6 +1,7 @@
 import {
   getValues,
   appendValues,
+  updateValues,
   batchUpdateValues,
   clearValues,
   batchUpdate,
@@ -160,6 +161,35 @@ export async function addEntry(env, params) {
   return row;
 }
 
+export async function updateEntry(env, params) {
+  const entryId = params.get("EntryID");
+  if (!entryId) throw new Error("Missing required parameter: EntryID");
+  ["Date", "TimeIn", "TimeOut", "JobNumber", "Reason"].forEach((key) => {
+    if (!params.get(key)) throw new Error("Missing required parameter: " + key);
+  });
+
+  const colA = await getValues(env, "DataPool!A:A");
+  const rowIndex = colA.findIndex((r) => String(r[0]) === String(entryId));
+  if (rowIndex === -1) {
+    return { EntryID: entryId, updated: false };
+  }
+
+  const row = {
+    EntryID: entryId,
+    Date: params.get("Date"),
+    TimeIn: params.get("TimeIn"),
+    TimeOut: params.get("TimeOut"),
+    TotalTime: computeTotalTime(params.get("TimeIn"), params.get("TimeOut")),
+    JobNumber: params.get("JobNumber"),
+    Reason: params.get("Reason"),
+  };
+  const values = SHEET_HEADERS.DataPool.map((h) => row[h]);
+  const sheetRowNum = rowIndex + 1; // rowIndex is 0-based including header, sheet rows are 1-based
+  await updateValues(env, `DataPool!A${sheetRowNum}:G${sheetRowNum}`, [values]);
+  await logAction(env, "updateEntry", row);
+  return { ...row, updated: true };
+}
+
 export async function deleteEntry(env, params) {
   const entryId = params.get("EntryID");
   if (!entryId) throw new Error("Missing required parameter: EntryID");
@@ -312,6 +342,8 @@ export async function handleAction(action, params, env) {
       return getEntries(env);
     case "addEntry":
       return addEntry(env, params);
+    case "updateEntry":
+      return updateEntry(env, params);
     case "deleteEntry":
       return deleteEntry(env, params);
     case "getDashboardData":

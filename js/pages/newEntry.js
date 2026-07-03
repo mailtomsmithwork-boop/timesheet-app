@@ -1,16 +1,5 @@
-// Standard scheduled hours, used by the quick time check below.
-const STANDARD_SCHEDULE = {
-  Monday: { start: "09:00", end: "17:00" },
-  Tuesday: { start: "09:00", end: "17:00" },
-  Wednesday: { start: "09:00", end: "17:00" },
-  Thursday: { start: "09:00", end: "17:00" },
-  Friday: { start: "09:00", end: "15:30" },
-};
-
-function timeToMinutes_(t) {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
-}
+// STANDARD_SCHEDULE and timeToMinutes_ now live in js/utils.js (shared with
+// the Dashboard's overtime stat).
 
 function pad2_(n) {
   return String(n).padStart(2, "0");
@@ -72,8 +61,18 @@ function parseSpokenEntry_(rawText) {
 }
 
 async function renderNewEntry(app) {
+  const editingEntryId = consumeEditingEntryId();
+  let editingEntry = null;
+  if (editingEntryId) {
+    const entries = await getEntriesCached();
+    editingEntry = entries.find((e) => e.EntryID === editingEntryId);
+    if (!editingEntry) {
+      showToast("Could not find that entry to edit — it may have been deleted.", "error");
+    }
+  }
+
   app.innerHTML = `
-    <h1>New Entry</h1>
+    <h1>${editingEntry ? "Edit Entry" : "New Entry"}</h1>
 
     <div class="quick-check">
       <h2>Quick Time Check</h2>
@@ -111,22 +110,23 @@ async function renderNewEntry(app) {
 
     <form id="newEntryForm" class="form">
       <label>Date
-        <input type="date" name="Date" required />
+        <input type="date" name="Date" value="${editingEntry ? editingEntry.Date : ""}" required />
       </label>
       <label>Time In
-        <input type="time" name="TimeIn" required />
+        <input type="time" name="TimeIn" value="${editingEntry ? editingEntry.TimeIn : ""}" required />
       </label>
       <label>Time Out
-        <input type="time" name="TimeOut" required />
+        <input type="time" name="TimeOut" value="${editingEntry ? editingEntry.TimeOut : ""}" required />
       </label>
       <label>Job Number
-        <input type="text" name="JobNumber" required />
+        <input type="text" name="JobNumber" value="${editingEntry ? editingEntry.JobNumber : ""}" required />
       </label>
       <label>Reason
-        <textarea name="Reason" required></textarea>
+        <textarea name="Reason" required>${editingEntry ? editingEntry.Reason : ""}</textarea>
       </label>
       <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Add Entry</button>
+        <button type="submit" class="btn btn-primary">${editingEntry ? "Save Changes" : "Add Entry"}</button>
+        ${editingEntry ? '<button type="button" id="cancelEditBtn" class="btn btn-secondary">Cancel</button>' : ""}
       </div>
     </form>
   `;
@@ -229,6 +229,12 @@ async function renderNewEntry(app) {
     });
   }
 
+  if (editingEntry) {
+    document.getElementById("cancelEditBtn").addEventListener("click", () => {
+      window.location.hash = "#/recordings";
+    });
+  }
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
@@ -242,9 +248,16 @@ async function renderNewEntry(app) {
     const submitBtn = form.querySelector("button[type=submit]");
     submitBtn.disabled = true;
     try {
-      await apiGet("addEntry", params);
-      invalidateEntries();
-      showToast("Entry added.", "success");
+      if (editingEntry) {
+        params.EntryID = editingEntry.EntryID;
+        await apiGet("updateEntry", params);
+        invalidateEntries();
+        showToast("Entry updated.", "success");
+      } else {
+        await apiGet("addEntry", params);
+        invalidateEntries();
+        showToast("Entry added.", "success");
+      }
       window.location.hash = "#/recordings";
     } catch (err) {
       showToast(err.message, "error");

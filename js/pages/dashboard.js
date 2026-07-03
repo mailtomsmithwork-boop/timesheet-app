@@ -1,5 +1,24 @@
+function computeOvertimeThisWeek_(entries) {
+  const weekStart = startOfWeekISOClient();
+  let overtimeMinutes = 0;
+  entries.forEach((r) => {
+    if (String(r.Date) >= weekStart) {
+      const workedMinutes = Math.round((parseFloat(r.TotalTime) || 0) * 60);
+      overtimeMinutes += workedMinutes - standardMinutesForDate(r.Date);
+    }
+  });
+  return overtimeMinutes;
+}
+
+function formatOvertime_(minutes) {
+  const sign = minutes > 0 ? "+" : minutes < 0 ? "−" : "";
+  return sign + formatHoursMinutes(Math.abs(minutes) / 60);
+}
+
 async function renderDashboard(app) {
   const dashboard = await getDashboardCached();
+  const entries = await getEntriesCached();
+  const overtimeMinutes = computeOvertimeThisWeek_(entries);
 
   app.innerHTML = `
     <h1>Dashboard</h1>
@@ -19,6 +38,10 @@ async function renderDashboard(app) {
       <div class="card">
         <div class="card-label">Entries</div>
         <div class="card-value">${dashboard.entryCount}</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Overtime This Week</div>
+        <div class="card-value ${overtimeMinutes > 0 ? "card-value-over" : overtimeMinutes < 0 ? "card-value-under" : ""}">${formatOvertime_(overtimeMinutes)}</div>
       </div>
     </div>
     <h2>Hours by Job Number</h2>

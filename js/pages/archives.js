@@ -1,6 +1,9 @@
 async function renderArchives(app) {
   app.innerHTML = `
-    <h1>Archives</h1>
+    <div class="page-header-row">
+      <h1>Archives</h1>
+      <button type="button" id="exportArchiveCsvBtn" class="btn btn-secondary" style="display:none;">Export CSV</button>
+    </div>
     <p class="hint">Past months are archived automatically on the 1st — pick a month to view its entries.</p>
     <div class="quick-check-row">
       <label>Month
@@ -12,7 +15,9 @@ async function renderArchives(app) {
 
   const monthSelect = document.getElementById("archiveMonth");
   const tableWrap = document.getElementById("archiveTableWrap");
+  const exportBtn = document.getElementById("exportArchiveCsvBtn");
   const columns = ["Date", "TimeIn", "TimeOut", "TotalTime", "JobNumber", "Reason", "EntryID"];
+  let currentEntries = [];
 
   let months;
   try {
@@ -35,12 +40,15 @@ async function renderArchives(app) {
 
   async function loadMonth(month) {
     tableWrap.innerHTML = '<div class="loading">Loading…</div>';
+    exportBtn.style.display = "none";
     try {
       const entries = await apiGet("getArchiveEntries", { month });
+      currentEntries = entries;
       if (entries.length === 0) {
         tableWrap.innerHTML = '<p class="empty-cell">No entries in this month’s archive.</p>';
         return;
       }
+      exportBtn.style.display = "";
       tableWrap.innerHTML = `
         <div class="table-wrap">
           <table class="data-table">
@@ -59,6 +67,11 @@ async function renderArchives(app) {
       tableWrap.innerHTML = `<div class="error-panel">${err.message}</div>`;
     }
   }
+
+  exportBtn.addEventListener("click", () => {
+    if (currentEntries.length === 0) return;
+    downloadCsv(`timesheet-archive-${monthSelect.value}.csv`, columns, currentEntries);
+  });
 
   monthSelect.addEventListener("change", () => loadMonth(monthSelect.value));
   await loadMonth(monthSelect.value);

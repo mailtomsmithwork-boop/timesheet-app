@@ -39,6 +39,18 @@ h2 {
   letter-spacing: 0.05em;
 }
 
+.page-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.page-header-row h1 {
+  margin-bottom: 0;
+}
+
 /* Sidebar */
 
 .sidebar {
@@ -153,6 +165,14 @@ body.sidebar-collapsed .main-content {
   font-size: 26px;
   font-weight: 600;
   color: var(--accent);
+}
+
+.card-value-over {
+  color: var(--danger);
+}
+
+.card-value-under {
+  color: var(--success);
 }
 
 /* Buttons */
@@ -432,6 +452,24 @@ body.sidebar-collapsed .main-content {
   transform: translateY(8px);
   transition: opacity var(--transition), transform var(--transition);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.toast-action {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.toast-action:hover {
+  color: var(--accent-hover);
 }
 
 .toast-visible {

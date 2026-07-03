@@ -5,13 +5,17 @@ async function renderRecordings(app) {
   let sortCol = "Date";
   let sortDir = 1;
   let filterText = "";
+  let currentRows = [];
 
   app.innerHTML = `
-    <h1>Recordings</h1>
+    <div class="page-header-row">
+      <h1>Recordings</h1>
+      <button type="button" id="exportCsvBtn" class="btn btn-secondary">Export CSV</button>
+    </div>
     <input type="text" id="filterInput" class="input" placeholder="Filter by job number or reason…" />
     <div class="table-wrap">
       <table class="data-table">
-        <thead><tr>${columns.map((c) => `<th data-col="${c}">${c}</th>`).join("")}</tr></thead>
+        <thead><tr>${columns.map((c) => `<th data-col="${c}">${c}</th>`).join("")}<th></th></tr></thead>
         <tbody id="recordingsBody"></tbody>
       </table>
     </div>
@@ -21,28 +25,34 @@ async function renderRecordings(app) {
   const tbody = document.getElementById("recordingsBody");
 
   function renderRows() {
-    let rows = entries.filter((r) => {
+    currentRows = entries.filter((r) => {
       if (!filterText) return true;
       const haystack = (String(r.JobNumber) + " " + String(r.Reason)).toLowerCase();
       return haystack.includes(filterText.toLowerCase());
     });
-    rows = rows.slice().sort((a, b) => {
+    currentRows = currentRows.slice().sort((a, b) => {
       const av = a[sortCol], bv = b[sortCol];
       if (av < bv) return -1 * sortDir;
       if (av > bv) return 1 * sortDir;
       return 0;
     });
 
-    if (rows.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="${columns.length}" class="empty-cell">No entries found.</td></tr>`;
+    if (currentRows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="${columns.length + 1}" class="empty-cell">No entries found.</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = rows
+    tbody.innerHTML = currentRows
       .map(
-        (r) => `<tr>${columns.map((c) => `<td>${r[c] !== undefined ? r[c] : ""}</td>`).join("")}</tr>`
+        (r) =>
+          `<tr>${columns.map((c) => `<td>${r[c] !== undefined ? r[c] : ""}</td>`).join("")}` +
+          `<td><button type="button" class="btn btn-icon edit-row-btn" data-entry-id="${r.EntryID}" title="Edit">✎</button></td></tr>`
       )
       .join("");
+
+    tbody.querySelectorAll(".edit-row-btn").forEach((btn) => {
+      btn.addEventListener("click", () => startEditingEntry(btn.getAttribute("data-entry-id")));
+    });
   }
 
   filterInput.addEventListener("input", (e) => {
@@ -50,7 +60,7 @@ async function renderRecordings(app) {
     renderRows();
   });
 
-  document.querySelectorAll(".data-table th").forEach((th) => {
+  document.querySelectorAll(".data-table th[data-col]").forEach((th) => {
     th.addEventListener("click", () => {
       const col = th.getAttribute("data-col");
       if (sortCol === col) {
@@ -61,6 +71,14 @@ async function renderRecordings(app) {
       }
       renderRows();
     });
+  });
+
+  document.getElementById("exportCsvBtn").addEventListener("click", () => {
+    if (currentRows.length === 0) {
+      showToast("Nothing to export.", "error");
+      return;
+    }
+    downloadCsv(`timesheet-recordings-${new Date().toISOString().slice(0, 10)}.csv`, columns, currentRows);
   });
 
   renderRows();

@@ -28,16 +28,35 @@ async function renderRemoveEntry(app) {
     const entryId = new FormData(form).get("EntryID");
     if (!entryId) return;
 
-    if (!window.confirm("Delete entry " + entryId + "? This cannot be undone.")) {
+    if (!window.confirm("Delete entry " + entryId + "?")) {
       return;
     }
+
+    const deletedEntry = entries.find((r) => r.EntryID === entryId);
 
     const submitBtn = form.querySelector("button[type=submit]");
     submitBtn.disabled = true;
     try {
       await apiGet("deleteEntry", { EntryID: entryId });
       invalidateEntries();
-      showToast("Entry deleted.", "success");
+      showToast("Entry deleted.", "success", {
+        actionLabel: "Undo",
+        onAction: async () => {
+          try {
+            await apiGet("addEntry", {
+              Date: deletedEntry.Date,
+              TimeIn: deletedEntry.TimeIn,
+              TimeOut: deletedEntry.TimeOut,
+              JobNumber: deletedEntry.JobNumber,
+              Reason: deletedEntry.Reason,
+            });
+            invalidateEntries();
+            showToast("Entry restored.", "success");
+          } catch (err) {
+            showToast("Could not restore entry: " + err.message, "error");
+          }
+        },
+      });
       window.location.hash = "#/recordings";
     } catch (err) {
       showToast(err.message, "error");
