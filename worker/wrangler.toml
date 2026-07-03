@@ -1,0 +1,12 @@
+name = "timesheet-worker"
+main = "src/index.js"
+compatibility_date = "2026-07-01"
+
+[triggers]
+crons = ["0 1 1 * *"]
+
+[vars]
+SPREADSHEET_ID = "1hfBBmrwR6YngqdKBZziELPAWYeiUC6JMF6OOrlnLKqo"
+
+# Secret (not stored here): GOOGLE_SERVICE_ACCOUNT_KEY
+# Set with: wrangler secret put GOOGLE_SERVICE_ACCOUNT_KEY
