@@ -601,7 +601,7 @@ body.sidebar-collapsed .main-content {
 
   .main-content {
     margin-left: 0;
-    padding: 20px 16px calc(72px + env(safe-area-inset-bottom)) 16px;
+    padding: calc(20px + env(safe-area-inset-top)) 16px calc(72px + env(safe-area-inset-bottom)) 16px;
   }
 
   .bottom-nav {
@@ -667,9 +667,11 @@ body.sidebar-collapsed .main-content {
   }
 
   .status-widget {
-    top: calc(12px + env(safe-area-inset-top));
-    right: 16px;
-    bottom: auto;
-    left: auto;
+    /* Sits above the bottom nav, offset high enough to clear a toast (~56px
+       tall including its gap) so the two don't overlap when both are shown. */
+    bottom: calc(56px + env(safe-area-inset-bottom) + 68px);
+    left: 16px;
+    top: auto;
+    right: auto;
   }
 }
