@@ -50,14 +50,28 @@ async function renderDashboard(app) {
 
   const canvas = document.getElementById("jobChart");
   const data = dashboard.byJobNumber.map((d) => ({ label: d.jobNumber, value: d.hours }));
-  if (data.length === 0) {
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#9aa1b1";
-    ctx.font = "14px sans-serif";
-    ctx.fillText("No data yet.", 16, 30);
-  } else {
-    drawBarChart(canvas, data);
+
+  function draw() {
+    // canvas.clientWidth is self-referential once canvas.width is set (the
+    // canvas has no CSS width other than this rule), so the container's
+    // width is the only reliable resize signal.
+    const width = canvas.parentElement.clientWidth;
+    canvas.width = Math.max(280, Math.round(width));
+    canvas.height = Math.round(Math.min(320, Math.max(180, canvas.width * 0.35)));
+
+    if (data.length === 0) {
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#9aa1b1";
+      ctx.font = "14px sans-serif";
+      ctx.fillText("No data yet.", 16, 30);
+    } else {
+      drawBarChart(canvas, data);
+    }
   }
+
+  draw();
+  new ResizeObserver(draw).observe(canvas.parentElement || canvas);
 }
 
 function drawBarChart(canvas, data) {

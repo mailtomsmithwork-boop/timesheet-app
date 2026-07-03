@@ -12,7 +12,7 @@ const routes = {
 };
 
 function setActiveNavLink(hash) {
-  document.querySelectorAll("#sidebar a[data-route]").forEach((link) => {
+  document.querySelectorAll("#sidebar a[data-route], #bottomNav a[data-route]").forEach((link) => {
     link.classList.toggle("active", link.getAttribute("data-route") === hash);
   });
 }
@@ -21,6 +21,7 @@ async function router() {
   const hash = window.location.hash || "#/";
   const renderFn = routes[hash] || renderHome;
   setActiveNavLink(routes[hash] ? hash : "#/");
+  document.body.classList.remove("more-drawer-open");
 
   const app = document.getElementById("app");
   app.innerHTML = '<div class="loading">Loading…</div>';
@@ -35,6 +36,7 @@ async function router() {
 window.addEventListener("hashchange", router);
 window.addEventListener("DOMContentLoaded", () => {
   initSidebar();
+  initBottomNav();
   router();
 });
 
@@ -47,5 +49,20 @@ function initSidebar() {
   toggle.addEventListener("click", () => {
     const isCollapsed = document.body.classList.toggle("sidebar-collapsed");
     localStorage.setItem("ts_sidebar_collapsed", String(isCollapsed));
+  });
+}
+
+// On phone widths (see the 720px breakpoint in styles.css), the sidebar/hamburger
+// are hidden and replaced by #bottomNav; "More" reopens the same #sidebar element
+// restyled as a bottom-sheet drawer, so the 8 routes aren't duplicated anywhere.
+function initBottomNav() {
+  const moreBtn = document.getElementById("moreNavBtn");
+  const backdrop = document.getElementById("moreDrawerBackdrop");
+
+  moreBtn.addEventListener("click", () => {
+    document.body.classList.toggle("more-drawer-open");
+  });
+  backdrop.addEventListener("click", () => {
+    document.body.classList.remove("more-drawer-open");
   });
 }
