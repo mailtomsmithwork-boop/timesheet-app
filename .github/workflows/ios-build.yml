@@ -1,0 +1,60 @@
+name: iOS Unsigned IPA Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm ci
+
+      - name: Sync web assets into iOS project
+        working-directory: mobile
+        run: |
+          npm run sync-web
+          npx cap sync ios
+
+      - name: Resolve Swift package dependencies
+        working-directory: mobile/ios/App
+        run: xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
+
+      - name: Archive (unsigned)
+        working-directory: mobile/ios/App
+        run: |
+          xcodebuild archive \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -destination "generic/platform=iOS" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
+
+      - name: Package unsigned IPA
+        run: |
+          set -euo pipefail
+          APP_PATH="$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app"
+          PAYLOAD_DIR="$RUNNER_TEMP/Payload"
+          mkdir -p "$PAYLOAD_DIR"
+          cp -R "$APP_PATH" "$PAYLOAD_DIR/"
+          cd "$RUNNER_TEMP"
+          zip -r Timesheet.ipa Payload
+          mkdir -p "${{ github.workspace }}/dist"
+          cp Timesheet.ipa "${{ github.workspace }}/dist/Timesheet.ipa"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Timesheet-ipa
+          path: dist/Timesheet.ipa
+          retention-days: 14
