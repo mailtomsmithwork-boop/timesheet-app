@@ -1,9 +1,0 @@
-node_modules/
-www/
-ios/App/Pods/
-ios/App/build/
-ios/App/App/public/
-ios/App/App/capacitor.config.json
-**/xcuserdata/
-*.xcuserstate
-.DS_Store
